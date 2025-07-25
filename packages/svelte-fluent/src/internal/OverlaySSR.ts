@@ -11,35 +11,35 @@ type Props = {
 
 type Payload = {
 	head: {
-		out: string;
+		out: string[];
 		title: string;
 	};
-	out: string;
+	out: string[];
 	[x: string]: unknown;
 };
 
 function OverlaySSR($$payload: Payload, $$props: Props) {
 	const savedOut = $$payload.out;
 	const savedHeadOut = $$payload.head.out;
-	$$payload.out = '';
-	$$payload.head.out = '';
+	$$payload.out = [];
+	$$payload.head.out = [];
 	// @ts-expect-error Overlay is resolved to the non-SSR type
 	const res = Overlay($$payload, $$props);
 	const { id, args } = $$props;
 	const { getTranslation } = getInternalFluentContext();
 	const translation = getTranslation(id, args, true);
-	const headFragment = JSDOM.fragment($$payload.head.out);
-	const bodyFragment = JSDOM.fragment($$payload.out);
+	const headFragment = JSDOM.fragment($$payload.head.out.join(''));
+	const bodyFragment = JSDOM.fragment($$payload.out.join(''));
 	const templateNode = headFragment.firstElementChild as HTMLTemplateElement | null;
 	const rootNode = bodyFragment.firstElementChild as HTMLElement | null;
 	if (templateNode && rootNode && translation) {
 		rootNode.innerHTML = '';
 		rootNode.appendChild(templateNode.content.cloneNode(true));
 		translateElement(rootNode, translation);
-		$$payload.out = rootNode.outerHTML;
+		$$payload.out = [rootNode.outerHTML];
 	}
-	$$payload.out = savedOut + $$payload.out;
-	$$payload.head.out = savedHeadOut + $$payload.head.out;
+	$$payload.out = savedOut.concat($$payload.out);
+	$$payload.head.out = savedHeadOut.concat($$payload.head.out);
 	return res;
 }
 
